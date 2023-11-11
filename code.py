@@ -28,7 +28,6 @@ class polynomial_arithmetic:
             new_self.pop()
         return final
 
-
     def __add__(self, other):
         new_other = other.coefficients
         new_self = self.coefficients
@@ -61,7 +60,20 @@ class polynomial_arithmetic:
 
     def __sub__(self, other):
         return self + other
-    
+
+    def multiplicative_inverse(self, mod):
+        assert len(mod.coefficients) > 0, "mod must be a polynomial"
+        if self.degree() == 0: return polynomial_arithmetic([1])
+        u = polynomial_arithmetic([1])
+        v = polynomial_arithmetic([0])
+        r = polynomial_arithmetic(mod.coefficients)
+        s = polynomial_arithmetic(self.coefficients)
+        while s.degree() != 0:
+            q = r // s
+            r, s = s, r - q * s
+            u, v = v, u - q * v
+        return u % mod
+
     def val(self, bin = False):
         if bin: return "".join([str(x) for x in self.coefficients])
         ans = ""
@@ -71,3 +83,39 @@ class polynomial_arithmetic:
             elif i == 1: ans += f" + x" if ans else "x"
             else: ans += f" + x^{i}"
         return ans if ans else "0"
+
+class polynomial_arithmetic_irreducible:
+    def __init__(self, coefficients):
+        self.m = get_irreducible_polynomial(len(coefficients) - 1)
+        self.poly = polynomial_arithmetic(coefficients)
+    
+    def __mul__(self, other):
+        return (self.poly * other.poly) % self.m
+    
+    def __add__(self, other):
+        return (self.poly + other.poly) % self.m
+    
+    def __sub__(self, other):
+        return (self.poly - other.poly) % self.m
+    
+    def __mod__(self, other):
+        return (self.poly % other.poly) % self.m
+    
+    def __floordiv__(self, other):
+        return (self.poly // other.poly) % self.m
+    
+    def val(self, bin = False):
+        return self.poly.val(bin)
+    
+    def degree(self):
+        return self.poly.degree()
+    
+    def multiplicative_inverse(self, mod = None):
+        if mod is None: mod = self.m
+        return self.poly.multiplicative_inverse(mod)
+
+# poly1 = polynomial_arithmetic([1, 0, 1])
+# poly2 = polynomial_arithmetic([1, 0, 1, 0])
+
+# print(poly1.multiplicative_inverse(poly2).val())
+# print((poly1 % poly2).val())
